@@ -1,10 +1,9 @@
 package com.capstone.tokenatm.controller;
 
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class TokenEarnController {
-    final String url = "https://canvas.eee.uci.edu/api/v1/courses/47398/students/submissions";
-    
 
 }
