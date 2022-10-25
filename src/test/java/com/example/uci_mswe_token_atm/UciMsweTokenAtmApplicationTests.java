@@ -1,10 +1,10 @@
-package com.capstone.tokenatm;
+package com.example.uci_mswe_token_atm;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class TokenAtmApplicationTests {
+class UciMsweTokenAtmApplicationTests {
 
     @Test
     void contextLoads() {
