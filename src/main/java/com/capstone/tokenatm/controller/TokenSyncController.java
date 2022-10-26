@@ -20,6 +20,7 @@ public class TokenSyncController {
     private static final String API_ENDPOINT = "https://canvas.instructure.com/api/v1";
     private static final int COURSE_ID = 3737737;
     private static List<Integer> tokenQuizzes = Arrays.asList(12427623);
+
     public String sync() throws IOException, JSONException {
         String result = getStudentGrades().toString();
         return result;
@@ -41,24 +42,41 @@ public class TokenSyncController {
 
     /**
      * Fetch grades of all students for a specific assignment
-     * @param assignmentId Assignment ID, can be looked up using List Assignments API
+     *
+     * @param quizId Quiz ID, can be looked up using List Assignments API
      * @return Map of grades, key is student id, value is grade of that student for this assignment
      * @throws IOException
      * @throws JSONException
      */
-    private HashMap<Object, Object> getStudentAssignmentGrades(int assignmentId) throws IOException, JSONException {
+    private HashMap<Object, Object> getStudentQuizGrades(int quizId) throws IOException, JSONException {
         Map<Object, Object> users = getUsers();
-        //TODO: fetch grades of quizzes
+        String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
+        URL url = new URL(API_ENDPOINT + "/courses/" + COURSE_ID + "/quizzes/" + quizId + "/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
+        StringBuffer response = apiProcess(url);
+        JSONObject resultObj = new JSONObject(String.valueOf(response));
+        JSONArray result = resultObj.getJSONArray("quiz_submissions");
+
+        for (int i = 0; i < result.length(); i++) {
+            JSONObject jsonObject = result.getJSONObject(i);
+            double kept_score = jsonObject.getDouble("kept_score"), max_score = jsonObject.getDouble("quiz_points_possible");
+            double percentage_score = kept_score / max_score * 100;
+            String studentId = String.valueOf(jsonObject.getInt("user_id"));
+            System.out.println(users.get(studentId) + ": " + percentage_score);
+        }
         return null;
     }
 
     /**
      * Fetch grades of all quizzes that is required to earn tokens
+     *
      * @return Map of grades, key is student id, value is grade of that student for this assignment
      * @throws IOException
      * @throws JSONException
      */
     public HashMap<Object, Object> getStudentTokenGrades() throws IOException, JSONException {
+        for (int quizId : tokenQuizzes) {
+            getStudentQuizGrades(quizId);
+        }
         return null;
     }
 
