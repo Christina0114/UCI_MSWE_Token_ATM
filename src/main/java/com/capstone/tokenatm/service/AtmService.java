@@ -48,10 +48,24 @@ public class AtmService {
     }
 
     @GetMapping("/grades")
-    public HashMap<Object, Object> getStduentsData(
+    public HashMap<Object, Object> getStudentsData(
     ){
         try {
             return atmController.getStudentGrades();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    //Fetch grades related to Token earning assignments
+    @GetMapping("/token_grades")
+    public HashMap<Object, Object> getTokenGrades(
+    ){
+        try {
+            return atmController.getStudentTokenGrades();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
