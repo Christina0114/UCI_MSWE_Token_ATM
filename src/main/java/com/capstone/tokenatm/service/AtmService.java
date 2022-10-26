@@ -3,6 +3,7 @@ package com.capstone.tokenatm.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.capstone.tokenatm.controller.TokenSyncController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,7 @@ public class AtmService {
 
     //Fetch grades related to Token earning assignments
     @GetMapping("/token_grades")
-    public HashMap<Object, Object> getTokenGrades(
+    public Map<String, Double> getTokenGrades(
     ){
         try {
             return atmController.getStudentTokenGrades();
