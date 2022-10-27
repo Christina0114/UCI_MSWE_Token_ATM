@@ -5,7 +5,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.capstone.tokenatm.controller.QualtricsSyncController;
 import com.capstone.tokenatm.controller.TokenSyncController;
+import com.capstone.tokenatm.exceptions.BadRequestException;
+import com.capstone.tokenatm.exceptions.InternalServerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.boot.configurationprocessor.json.JSONException;
@@ -19,8 +24,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AtmService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AtmService.class);
     @Autowired
     TokenSyncController atmController;
+    @Autowired
+    QualtricsSyncController qualtricsController;
+
+    @GetMapping("/survey_distributions")
+    public Map<Object, Object> whoami(
+    ) throws BadRequestException, InternalServerException {
+        try {
+            LOGGER.info(qualtricsController.getSurveyDistributionHistory());
+        } catch (JSONException | IOException e) {
+            LOGGER.error(e.toString());
+            throw new InternalServerException();
+        } catch (BadRequestException e) {
+            throw e;
+        }
+        return null;
+    }
 
     @GetMapping("/sync")
     public String sync(
