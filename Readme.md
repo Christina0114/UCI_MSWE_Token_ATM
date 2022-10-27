@@ -2,6 +2,8 @@
 This is the API *RESTAPIDocs* for Token ATM.
 This project is based on SpringBoot. 
 
+## Overall Structure
+![img.png](img.png)
 ## Endpoints
 
 Open endpoints do need  Authentication.
