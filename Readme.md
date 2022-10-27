@@ -66,6 +66,19 @@ We use JWT token here to do the Authentication.
           "null(Token ATM Quiz)"
          ]}
         ```
-  ### Survey  related
+
+### Token  related
+* `GET baseURL/sync`
+  * calculate how many tokens each students have
+  * return a list of students' name, id, tokens
+* `PUT baseURL/token/spend`
+  * reduce one tokens for student if there is enough tokens 
+
+
+ ### Survey  related
 * `GET baseURL/survey_distributions/`
     * return the all grades for each students for certain course
+
+### Assignment  related
+* `PUT baseURL/assignment/<assignment_id>/override/`
+  * If the student is qualified to resubmit assignment, we can override the assignment
