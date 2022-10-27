@@ -34,6 +34,13 @@ public class TokenSyncController {
         return result;
     }
 
+    /**
+     * Get students name and id for the courseID
+     *
+     * @return Map of student id and student names
+     * @throws IOException
+     * @throws JSONException
+     */
     public HashMap<Object, Object> getStudents() throws IOException, JSONException {
         String path = API_ENDPOINT + "/courses/" + COURSE_ID + "/users?per_page=50&enrollment_type=student";
         URL url = new URL(path);
