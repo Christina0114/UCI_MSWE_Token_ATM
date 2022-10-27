@@ -1,40 +1,32 @@
-package com.capstone.tokenatm.service;
+package com.capstone.tokenatm.controller;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.capstone.tokenatm.controller.QualtricsSyncController;
-import com.capstone.tokenatm.controller.TokenSyncController;
 import com.capstone.tokenatm.exceptions.BadRequestException;
 import com.capstone.tokenatm.exceptions.InternalServerException;
+import com.capstone.tokenatm.service.EarnService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Created by khwanchanok on 4/6/2018 AD.
- */
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
-public class AtmService {
+public class EarnController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AtmService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EarnService.class);
+
     @Autowired
-    TokenSyncController atmController;
-    @Autowired
-    QualtricsSyncController qualtricsController;
+    EarnService earnService;
 
     @GetMapping("/survey_distributions")
     public Map<Object, Object> whoami(
     ) throws BadRequestException, InternalServerException {
         try {
-            LOGGER.info(qualtricsController.getSurveyDistributionHistory());
+            LOGGER.info(earnService.getSurveyDistributionHistory());
         } catch (JSONException | IOException e) {
             LOGGER.error(e.toString());
             throw new InternalServerException();
@@ -46,9 +38,9 @@ public class AtmService {
 
     @GetMapping("/sync")
     public String sync(
-            ){
+    ){
         try {
-            return atmController.sync();
+            return earnService.sync();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -61,7 +53,7 @@ public class AtmService {
     public HashMap<Object, Object> users(
     ){
         try {
-            return atmController.getUsers();
+            return earnService.getUsers();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -74,7 +66,7 @@ public class AtmService {
     public HashMap<Object, Object> getStudentsData(
     ){
         try {
-            return atmController.getStudentGrades();
+            return earnService.getStudentGrades();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -83,12 +75,11 @@ public class AtmService {
         return null;
     }
 
-    //Fetch grades related to Token earning assignments
     @GetMapping("/token_grades")
     public Map<String, Double> getTokenGrades(
     ){
         try {
-            return atmController.getStudentTokenGrades();
+            return earnService.getStudentTokenGrades();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -101,7 +92,7 @@ public class AtmService {
     public HashMap<Object, Object> getCourseData(
     ){
         try {
-            return atmController.getCourseData();
+            return earnService.getCourseData();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
