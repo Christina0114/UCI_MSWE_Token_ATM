@@ -26,18 +26,26 @@ public class TokenSyncController {
         return result;
     }
 
-    public HashMap<Object, Object> getUsers() throws IOException, JSONException {
-        URL url = new URL(API_ENDPOINT + "/courses/" + COURSE_ID + "/users?per_page=50&enrollment_type=student");
+    public String sync_tokens() throws IOException, JSONException {
+        String result = String.valueOf(getStudentGrades());
+        // filter assignmentId
+        // calculate assignment's average
+        // update_tokens
+        return result;
+    }
+
+    public HashMap<Object, Object> getStudents() throws IOException, JSONException {
+        String path = API_ENDPOINT + "/courses/" + COURSE_ID + "/users?per_page=50&enrollment_type=student";
+        URL url = new URL(path);
         StringBuffer response = apiProcess(url);
         JSONArray result = new JSONArray(String.valueOf(response));
-
-        HashMap<Object, Object> users = new HashMap<>();
+        HashMap<Object, Object> students = new HashMap<>();
         for (int i = 0; i < result.length(); i++) {
-            String user_id = ((JSONObject) result.get(i)).get("id").toString();
-            String users_name = ((JSONObject) result.get(i)).get("name").toString();
-            users.put(user_id, users_name);
+            String student_id = ((JSONObject) result.get(i)).get("id").toString();
+            String student_name = ((JSONObject) result.get(i)).get("name").toString();
+            students.put(student_id, student_name);
         }
-        return users;
+        return students;
     }
 
     /**
@@ -49,7 +57,7 @@ public class TokenSyncController {
      * @throws JSONException
      */
     private Map<String, Double> getStudentQuizScores(int quizId) throws IOException, JSONException {
-        Map<Object, Object> users = getUsers();
+        Map<Object, Object> users = getStudents();
         String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
         URL url = new URL(API_ENDPOINT + "/courses/" + COURSE_ID + "/quizzes/" + quizId + "/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
         StringBuffer response = apiProcess(url);
@@ -88,7 +96,7 @@ public class TokenSyncController {
     }
 
     public HashMap<Object, Object> getStudentGrades() throws IOException, JSONException {
-        Map<Object, Object> users = getUsers();
+        Map<Object, Object> users = getStudents();
         String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
         URL url = new URL(API_ENDPOINT + "/courses/" + COURSE_ID + "/students/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
         StringBuffer response = apiProcess(url);

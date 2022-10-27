@@ -57,11 +57,11 @@ public class AtmService {
         return null;
     }
 
-    @GetMapping("/users")
+    @GetMapping("/students")
     public HashMap<Object, Object> users(
     ){
         try {
-            return atmController.getUsers();
+            return atmController.getStudents();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
