@@ -5,6 +5,7 @@ import org.springframework.boot.configurationprocessor.json.JSONException;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public interface EarnService {
@@ -16,9 +17,9 @@ public interface EarnService {
 
     Map<String, Double> getStudentTokenGrades() throws IOException, JSONException;
 
-    Map<String, Double> getStudentQuizScores(int quizId) throws IOException, JSONException;
+    //String getSurveyDistributionHistory() throws IOException, JSONException, BadRequestException;
 
-    String getSurveyDistributionHistory() throws IOException, JSONException, BadRequestException;
+    Map<String, List<String>> getStudentSurveyCompletions() throws IOException, JSONException, BadRequestException;
 
     String sync() throws IOException, JSONException;
 }

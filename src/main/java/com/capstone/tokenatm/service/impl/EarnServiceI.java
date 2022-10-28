@@ -20,15 +20,26 @@ import java.util.stream.Collectors;
 
 @Service("EarnService")
 public class EarnServiceI implements EarnService {
+
+    //Canvas API settings
+    //TODO: The API Endpoint and Bearer token is only used for testing. Please change to UCI endpoint and actual tokens in prod
+    //Bearer Token for canvas.instructure.com
     private static final String BEARER_TOKEN = "7~sKb3Kq7M9EjSgDtMhugxCEs5oD76pbJgBWAFScBliSi7Iin8QubiBHEBlrWfYunG";
+    //Testing endpoint for Canvas
     private static final String CANVAS_API_ENDPOINT = "https://canvas.instructure.com/api/v1";
-    private static final String Qualtrics_API_ENDPOINT = "https://iad1.qualtrics.com/API/v3";
-
+    //Course Id
     private static final int COURSE_ID = 3737737;
-    private static List<Integer> tokenQuizzes = Arrays.asList(12427623);
-    private static final String surveyId = "SV_56fa1nPQlOAqnmm";
+    //List of Quizzes in the first module (which needs over 70% average to earn the initial 2 tokens)
+    private static List<Integer> tokenQuizIds = Arrays.asList(12427623);
 
+    //Qualtrics API Settings
+    //TODO: The API Endpoint and API key is only used for testing. Please change to UCI endpoint and actual keys in prod
+    //API Key for Qualtrics
     private static final String API_KEY = "3yoP4lV2G7wmxOVtIkH6G8K5IcGDgtdUf2Ys3um9";
+    //Testing endpoint for Qualtrics
+    private static final String QUALTRICS_API_ENDPOINT = "https://iad1.qualtrics.com/API/v3";
+    //Survey Id
+    private static final String surveyId = "SV_8oIf0qAz5g0TFiK";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EarnService.class);
     @Override
@@ -38,12 +49,11 @@ public class EarnServiceI implements EarnService {
 
     private StringBuffer apiProcess(URL url, Boolean isCanvas) throws IOException {
         HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+        httpURLConnection.setRequestProperty("Content-Type", "application/json");
         if (isCanvas) {
             httpURLConnection.setRequestProperty("Authorization", "Bearer " + BEARER_TOKEN);
-            httpURLConnection.setRequestProperty("Content-Type", "application/json");
         } else {
             httpURLConnection.setRequestProperty("X-API-TOKEN", API_KEY);
-            httpURLConnection.setRequestProperty("Content-Type", "application/json");
         }
         httpURLConnection.setRequestMethod("GET");
         BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
@@ -124,18 +134,23 @@ public class EarnServiceI implements EarnService {
     @Override
     public Map<String, Double> getStudentTokenGrades() throws IOException, JSONException {
         Map<String, Double> averageQuizScores = new HashMap<>();
-        for (int quizId : tokenQuizzes) {
+        for (int quizId : tokenQuizIds) {
             Map<String, Double> quizScores = getStudentQuizScores(quizId);
             quizScores.entrySet().forEach(e -> {
                 String userId = e.getKey();
                 averageQuizScores.put(userId, averageQuizScores.getOrDefault(userId, 0.0) + e.getValue());
             });
         }
-        averageQuizScores.entrySet().forEach(e -> e.setValue(e.getValue() / tokenQuizzes.size()));
+        averageQuizScores.entrySet().forEach(e -> e.setValue(e.getValue() / tokenQuizIds.size()));
         return averageQuizScores;
     }
 
     @Override
+    public Map<String, List<String>> getStudentSurveyCompletions() throws IOException, JSONException, BadRequestException {
+        return null;
+    }
+
+
     /**
      * Fetch grades of all students for a specific quiz
      *
@@ -144,7 +159,7 @@ public class EarnServiceI implements EarnService {
      * @throws IOException
      * @throws JSONException
      */
-    public Map<String, Double> getStudentQuizScores(int quizId) throws IOException, JSONException {
+    private Map<String, Double> getStudentQuizScores(int quizId) throws IOException, JSONException {
         Map<Object, Object> users = getUsers();
         String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/quizzes/" + quizId + "/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
@@ -163,31 +178,32 @@ public class EarnServiceI implements EarnService {
         return quizScores;
     }
 
-    @Override
-    public String getSurveyDistributionHistory() throws IOException, JSONException, BadRequestException {
-        String distributionId = getDistributionId(surveyId);
-        URL url = UriComponentsBuilder
-                .fromUriString(Qualtrics_API_ENDPOINT + "/distributions/" + distributionId + "/history")
-                .queryParam("surveyId", surveyId)
-                .build().toUri().toURL();
-        StringBuffer response = apiProcess(url,false);
-//        JSONObject resultObj = new JSONObject(String.valueOf(response));
-//        JSONArray surveyDistributions = resultObj.getJSONObject("result").getJSONArray("elements");
-        return response.toString();
-    }
 
-    private String getDistributionId(String surveyId) throws IOException, JSONException, BadRequestException {
-        URL url = UriComponentsBuilder
-                .fromUriString(Qualtrics_API_ENDPOINT + "/distributions")
-                .queryParam("surveyId", surveyId)
-                .build().toUri().toURL();
-        StringBuffer response = apiProcess(url, false);
-        JSONObject resultObj = new JSONObject(String.valueOf(response));
-        JSONArray elementsArray = resultObj.getJSONObject("result").getJSONArray("elements");
-        if (elementsArray.length() == 0) {
-            LOGGER.error("Distributions array is empty");
-        }
-        JSONObject distributionObj = elementsArray.getJSONObject(0);
-        return distributionObj.getString("id");
-    }
+//    @Override
+//    public String getSurveyDistributionHistory() throws IOException, JSONException, BadRequestException {
+//        String distributionId = getDistributionId(surveyId);
+//        URL url = UriComponentsBuilder
+//                .fromUriString(QUALTRICS_API_ENDPOINT + "/distributions/" + distributionId + "/history")
+//                .queryParam("surveyId", surveyId)
+//                .build().toUri().toURL();
+//        StringBuffer response = apiProcess(url,false);
+////        JSONObject resultObj = new JSONObject(String.valueOf(response));
+////        JSONArray surveyDistributions = resultObj.getJSONObject("result").getJSONArray("elements");
+//        return response.toString();
+//    }
+//
+//    private String getDistributionId(String surveyId) throws IOException, JSONException, BadRequestException {
+//        URL url = UriComponentsBuilder
+//                .fromUriString(QUALTRICS_API_ENDPOINT + "/distributions")
+//                .queryParam("surveyId", surveyId)
+//                .build().toUri().toURL();
+//        StringBuffer response = apiProcess(url, false);
+//        JSONObject resultObj = new JSONObject(String.valueOf(response));
+//        JSONArray elementsArray = resultObj.getJSONObject("result").getJSONArray("elements");
+//        if (elementsArray.length() == 0) {
+//            LOGGER.error("Distributions array is empty");
+//        }
+//        JSONObject distributionObj = elementsArray.getJSONObject(0);
+//        return distributionObj.getString("id");
+//    }
 }
