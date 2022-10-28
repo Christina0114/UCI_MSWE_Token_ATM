@@ -1,7 +1,10 @@
 package com.capstone.tokenatm.service;
 
 import com.capstone.tokenatm.exceptions.BadRequestException;
+import com.capstone.tokenatm.exceptions.InternalServerException;
 import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -17,9 +20,10 @@ public interface EarnService {
 
     Map<String, Double> getStudentTokenGrades() throws IOException, JSONException;
 
-    //String getSurveyDistributionHistory() throws IOException, JSONException, BadRequestException;
+    @Retryable(value = InternalServerException.class, maxAttempts = 10, backoff = @Backoff(delay = 1_000))
+    List<String> getSurveyCompletions(String surveyId) throws InternalServerException;
 
-    Map<String, List<String>> getStudentSurveyCompletions() throws IOException, JSONException, BadRequestException;
+    String getIdentity() throws IOException, JSONException;
 
     String sync() throws IOException, JSONException;
 }

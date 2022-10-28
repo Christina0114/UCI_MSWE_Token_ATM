@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,16 +23,26 @@ public class EarnController {
     @Autowired
     EarnService earnService;
 
-    @GetMapping("/survey_distributions")
-    public Map<Object, Object> whoami(
-    ) throws BadRequestException, InternalServerException {
+    //For testing if Qualtrics is working
+    @GetMapping("/whoami")
+    public String whoami(
+    ) throws InternalServerException {
         try {
-            LOGGER.info(earnService.getSurveyDistributionHistory());
+            return earnService.getIdentity();
         } catch (JSONException | IOException e) {
             LOGGER.error(e.toString());
             throw new InternalServerException();
-        } catch (BadRequestException e) {
-            throw e;
+        }
+    }
+
+    @GetMapping("/survey_export")
+        public List<String> getSurveyExport(
+    ) {
+        try {
+            return earnService.getSurveyCompletions("SV_8oIf0qAz5g0TFiK");
+        } catch (InternalServerException e) {
+            LOGGER.error("Internal Server Exception");
+            e.printStackTrace();
         }
         return null;
     }

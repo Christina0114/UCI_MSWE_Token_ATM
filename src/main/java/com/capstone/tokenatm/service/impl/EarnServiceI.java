@@ -1,7 +1,9 @@
 package com.capstone.tokenatm.service.impl;
 
 import com.capstone.tokenatm.exceptions.BadRequestException;
+import com.capstone.tokenatm.exceptions.InternalServerException;
 import com.capstone.tokenatm.service.EarnService;
+import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.configurationprocessor.json.JSONArray;
@@ -10,10 +12,8 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,7 +23,7 @@ public class EarnServiceI implements EarnService {
 
     //Canvas API settings
     //TODO: The API Endpoint and Bearer token is only used for testing. Please change to UCI endpoint and actual tokens in prod
-    //Bearer Token for canvas.instructure.com
+    //Bearer Token for dummy canvas endpoint
     private static final String BEARER_TOKEN = "7~sKb3Kq7M9EjSgDtMhugxCEs5oD76pbJgBWAFScBliSi7Iin8QubiBHEBlrWfYunG";
     //Testing endpoint for Canvas
     private static final String CANVAS_API_ENDPOINT = "https://canvas.instructure.com/api/v1";
@@ -41,37 +41,54 @@ public class EarnServiceI implements EarnService {
     //Survey Id
     private static final String surveyId = "SV_8oIf0qAz5g0TFiK";
 
+    private static final String QualtricsBody = "{\"format\":\"json\",\"compress\":\"false\"}";
+    public static final MediaType JSON
+            = MediaType.get("application/json; charset=utf-8");
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EarnService.class);
+
     @Override
     public String sync() throws IOException, JSONException {
         return getStudentGrades().toString();
     }
 
-    private StringBuffer apiProcess(URL url, Boolean isCanvas) throws IOException {
-        HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-        httpURLConnection.setRequestProperty("Content-Type", "application/json");
-        if (isCanvas) {
-            httpURLConnection.setRequestProperty("Authorization", "Bearer " + BEARER_TOKEN);
-        } else {
-            httpURLConnection.setRequestProperty("X-API-TOKEN", API_KEY);
-        }
-        httpURLConnection.setRequestMethod("GET");
-        BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
-        String output;
+    @Override
+    public String getIdentity() throws IOException {
+        URL url = UriComponentsBuilder
+                .fromUriString(QUALTRICS_API_ENDPOINT + "/whoami")
+                .build().toUri().toURL();
+        String response = apiProcess(url, false);
+        return String.valueOf(response);
+    }
 
-        StringBuffer response = new StringBuffer();
-        while ((output = in.readLine()) != null) {
-            response.append(output);
+    private String apiProcess(URL url, Boolean isCanvas) throws IOException {
+        return apiProcess(url, "", isCanvas);
+    }
+
+    private String apiProcess(URL url, String body, Boolean isCanvas) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+        Request.Builder builder = new Request.Builder()
+                .url(url)
+                .addHeader("Content-Type", "application/json");
+        if (isCanvas) {
+            builder.addHeader("Authorization", "Bearer " + BEARER_TOKEN);
+        } else {
+            builder.addHeader("X-API-TOKEN", API_KEY);
         }
-        in.close();
-        return response;
+        if (body.length() > 0) {
+            builder.post(RequestBody.create(body, JSON));
+        }
+        Request request = builder.build();
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
     }
 
     @Override
     public HashMap<Object, Object> getUsers() throws IOException, JSONException {
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/users?per_page=50&enrollment_type=student");
-        StringBuffer response = apiProcess(url, true);
-        JSONArray result = new JSONArray(String.valueOf(response));
+        String response = apiProcess(url, true);
+        JSONArray result = new JSONArray(response);
 
         HashMap<Object, Object> users = new HashMap<>();
         for (int i = 0; i < result.length(); i++) {
@@ -87,8 +104,8 @@ public class EarnServiceI implements EarnService {
         Map<Object, Object> users = getUsers();
         String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/students/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
-        StringBuffer response = apiProcess(url, true);
-        JSONArray result = new JSONArray(String.valueOf(response));
+        String response = apiProcess(url, true);
+        JSONArray result = new JSONArray(response);
 
         HashMap<Object, Object> students_data = new HashMap<>();
         HashMap<Object, Object> courses_name = getCourseData();
@@ -110,8 +127,8 @@ public class EarnServiceI implements EarnService {
     @Override
     public HashMap<Object, Object> getCourseData() throws IOException, JSONException {
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/assignment_groups?exclude_assignment_submission_types%5B%5D=wiki_page&exclude_response_fields%5B%5D=description&exclude_response_fields%5B%5D=in_closed_grading_period&exclude_response_fields%5B%5D=needs_grading_count&exclude_response_fields%5B%5D=rubric&include%5B%5D=assignment_group_id&include%5B%5D=assignment_visibility&include%5B%5D=assignments&include%5B%5D=grades_published&include%5B%5D=post_manually&include%5B%5D=module_ids&override_assignment_dates=false&per_page=100");
-        StringBuffer response = apiProcess(url, true);
-        JSONArray result = new JSONArray(String.valueOf(response));
+        String response = apiProcess(url, true);
+        JSONArray result = new JSONArray(response);
 
         HashMap<Object, Object> course_data = new HashMap<>();
         for (int i = 0; i < result.length(); i++) {
@@ -145,11 +162,107 @@ public class EarnServiceI implements EarnService {
         return averageQuizScores;
     }
 
+    /**
+     * Fetch completion status of required surveys
+     * See https://api.qualtrics.com/6b00592b9c013-start-response-export for details of API
+     *
+     * @return
+     * @throws IOException
+     * @throws JSONException
+     * @throws BadRequestException
+     */
     @Override
-    public Map<String, List<String>> getStudentSurveyCompletions() throws IOException, JSONException, BadRequestException {
-        return null;
+    public List<String> getSurveyCompletions(String surveyId) throws InternalServerException {
+        try {
+            URL url = UriComponentsBuilder
+                    .fromUriString(QUALTRICS_API_ENDPOINT + "/surveys/" + surveyId + "/export-responses")
+                    .build().toUri().toURL();
+            String response = apiProcess(url, QualtricsBody, false);
+            JSONObject resultObj = new JSONObject(response).getJSONObject("result");
+            String progressId = resultObj.getString("progressId");
+            ExportResponse exportResponse = null;
+            while (true) {
+                exportResponse = getExportStatus(progressId);
+                LOGGER.info("Current status: " + exportResponse.status + ", Progress: " + exportResponse.getPercentComplete());
+                if (exportResponse.getStatus().equals("complete")) {
+                    //export success
+                    return getSurveyCompletedEmailAddresses(exportResponse.getFileId());
+                } else if (exportResponse.getStatus().equals("failed")) {
+                    //export failed
+                    LOGGER.error("Failed to download survey export, progress = " + exportResponse.getPercentComplete() + "%");
+                    throw new InternalServerException("Download of survey export failed");
+                } else {
+                    //still in progress
+                    LOGGER.info("Download in progress, current completed: " + exportResponse.getPercentComplete() + "%");
+                }
+            }
+        } catch (IOException | JSONException e) {
+            LOGGER.error(e.toString());
+            throw new InternalServerException("Error when processing survey data");
+        }
+
     }
 
+    /**
+     * Fetch the current exporting progress of given progressId, should iterate until percentage is 100.0
+     *
+     * @param progressId
+     * @return
+     * @throws IOException
+     * @throws JSONException
+     */
+    private ExportResponse getExportStatus(String progressId) throws IOException, JSONException {
+        URL url = UriComponentsBuilder
+                .fromUriString(QUALTRICS_API_ENDPOINT + "/surveys/" + surveyId + "/export-responses/" + progressId)
+                .build().toUri().toURL();
+        String response = apiProcess(url, false);
+        //A more elegant way is to use the ObjectMapper, but initializing it is very costly
+        JSONObject resultObj = new JSONObject(response).getJSONObject("result");
+        return new ExportResponse(
+                resultObj.getString("fileId"),
+                resultObj.getDouble("percentComplete"),
+                resultObj.getString("status"));
+    }
+
+    private List<String> getSurveyCompletedEmailAddresses(String fileId) throws IOException, JSONException {
+        LOGGER.info("FileId = " + fileId);
+        List<String> completedEmails = new ArrayList<>();
+        URL url = UriComponentsBuilder
+                .fromUriString(QUALTRICS_API_ENDPOINT + "/surveys/" + surveyId + "/export-responses/" + fileId + "/file")
+                .build().toUri().toURL();
+        String response = apiProcess(url, false);
+        JSONArray responseList = new JSONObject(response).getJSONArray("responses");
+        for (int i = 0; i < responseList.length(); i++) {
+            JSONObject responseItem = responseList.getJSONObject(i).getJSONObject("values");
+            String emailAddress = responseItem.getString("EmailAddress");
+            completedEmails.add(emailAddress);
+        }
+        return completedEmails;
+    }
+
+    private class ExportResponse {
+        public String getFileId() {
+            return fileId;
+        }
+
+        public double getPercentComplete() {
+            return percentComplete;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        private String fileId;
+        private double percentComplete;
+        private String status;
+
+        public ExportResponse(String fileId, double percentComplete, String status) {
+            this.fileId = fileId;
+            this.percentComplete = percentComplete;
+            this.status = status;
+        }
+    }
 
     /**
      * Fetch grades of all students for a specific quiz
@@ -163,8 +276,8 @@ public class EarnServiceI implements EarnService {
         Map<Object, Object> users = getUsers();
         String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/quizzes/" + quizId + "/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
-        StringBuffer response = apiProcess(url, true);
-        JSONObject resultObj = new JSONObject(String.valueOf(response));
+        String response = apiProcess(url, true);
+        JSONObject resultObj = new JSONObject(response);
         JSONArray result = resultObj.getJSONArray("quiz_submissions");
 
         Map<String, Double> quizScores = new HashMap<>();
