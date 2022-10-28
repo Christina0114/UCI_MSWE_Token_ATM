@@ -12,7 +12,6 @@ public interface EarnService {
 
     HashMap<Object, Object> getStudentGrades() throws IOException, JSONException;
 
-
     HashMap<Object, Object> getCourseData() throws IOException, JSONException;
 
     Map<String, Double> getStudentTokenGrades() throws IOException, JSONException;
@@ -21,6 +20,6 @@ public interface EarnService {
 
     String getSurveyDistributionHistory() throws IOException, JSONException, BadRequestException;
 
-    public String sync() throws IOException, JSONException;
+    String sync() throws IOException, JSONException;
 }
 

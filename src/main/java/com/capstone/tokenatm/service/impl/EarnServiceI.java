@@ -21,10 +21,14 @@ import java.util.stream.Collectors;
 @Service("EarnService")
 public class EarnServiceI implements EarnService {
     private static final String BEARER_TOKEN = "7~sKb3Kq7M9EjSgDtMhugxCEs5oD76pbJgBWAFScBliSi7Iin8QubiBHEBlrWfYunG";
-    private static final String API_ENDPOINT = "https://canvas.instructure.com/api/v1";
+    private static final String CANVAS_API_ENDPOINT = "https://canvas.instructure.com/api/v1";
+    private static final String Qualtrics_API_ENDPOINT = "https://iad1.qualtrics.com/API/v3";
+
     private static final int COURSE_ID = 3737737;
     private static List<Integer> tokenQuizzes = Arrays.asList(12427623);
     private static final String surveyId = "SV_56fa1nPQlOAqnmm";
+
+    private static final String API_KEY = "3yoP4lV2G7wmxOVtIkH6G8K5IcGDgtdUf2Ys3um9";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EarnService.class);
     @Override
@@ -32,10 +36,15 @@ public class EarnServiceI implements EarnService {
         return getStudentGrades().toString();
     }
 
-    private StringBuffer apiProcess(URL url) throws IOException {
+    private StringBuffer apiProcess(URL url, Boolean isCanvas) throws IOException {
         HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-        httpURLConnection.setRequestProperty("Authorization", "Bearer " + BEARER_TOKEN);
-        httpURLConnection.setRequestProperty("Content-Type", "application/json");
+        if (isCanvas) {
+            httpURLConnection.setRequestProperty("Authorization", "Bearer " + BEARER_TOKEN);
+            httpURLConnection.setRequestProperty("Content-Type", "application/json");
+        } else {
+            httpURLConnection.setRequestProperty("X-API-TOKEN", API_KEY);
+            httpURLConnection.setRequestProperty("Content-Type", "application/json");
+        }
         httpURLConnection.setRequestMethod("GET");
         BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
         String output;
@@ -50,8 +59,8 @@ public class EarnServiceI implements EarnService {
 
     @Override
     public HashMap<Object, Object> getUsers() throws IOException, JSONException {
-        URL url = new URL(API_ENDPOINT + "/courses/" + COURSE_ID + "/users?per_page=50&enrollment_type=student");
-        StringBuffer response = apiProcess(url);
+        URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/users?per_page=50&enrollment_type=student");
+        StringBuffer response = apiProcess(url, true);
         JSONArray result = new JSONArray(String.valueOf(response));
 
         HashMap<Object, Object> users = new HashMap<>();
@@ -67,8 +76,8 @@ public class EarnServiceI implements EarnService {
     public HashMap<Object, Object> getStudentGrades() throws IOException, JSONException {
         Map<Object, Object> users = getUsers();
         String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
-        URL url = new URL(API_ENDPOINT + "/courses/" + COURSE_ID + "/students/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
-        StringBuffer response = apiProcess(url);
+        URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/students/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
+        StringBuffer response = apiProcess(url, true);
         JSONArray result = new JSONArray(String.valueOf(response));
 
         HashMap<Object, Object> students_data = new HashMap<>();
@@ -90,8 +99,8 @@ public class EarnServiceI implements EarnService {
 
     @Override
     public HashMap<Object, Object> getCourseData() throws IOException, JSONException {
-        URL url = new URL(API_ENDPOINT + "/courses/" + COURSE_ID + "/assignment_groups?exclude_assignment_submission_types%5B%5D=wiki_page&exclude_response_fields%5B%5D=description&exclude_response_fields%5B%5D=in_closed_grading_period&exclude_response_fields%5B%5D=needs_grading_count&exclude_response_fields%5B%5D=rubric&include%5B%5D=assignment_group_id&include%5B%5D=assignment_visibility&include%5B%5D=assignments&include%5B%5D=grades_published&include%5B%5D=post_manually&include%5B%5D=module_ids&override_assignment_dates=false&per_page=100");
-        StringBuffer response = apiProcess(url);
+        URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/assignment_groups?exclude_assignment_submission_types%5B%5D=wiki_page&exclude_response_fields%5B%5D=description&exclude_response_fields%5B%5D=in_closed_grading_period&exclude_response_fields%5B%5D=needs_grading_count&exclude_response_fields%5B%5D=rubric&include%5B%5D=assignment_group_id&include%5B%5D=assignment_visibility&include%5B%5D=assignments&include%5B%5D=grades_published&include%5B%5D=post_manually&include%5B%5D=module_ids&override_assignment_dates=false&per_page=100");
+        StringBuffer response = apiProcess(url, true);
         JSONArray result = new JSONArray(String.valueOf(response));
 
         HashMap<Object, Object> course_data = new HashMap<>();
@@ -138,8 +147,8 @@ public class EarnServiceI implements EarnService {
     public Map<String, Double> getStudentQuizScores(int quizId) throws IOException, JSONException {
         Map<Object, Object> users = getUsers();
         String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
-        URL url = new URL(API_ENDPOINT + "/courses/" + COURSE_ID + "/quizzes/" + quizId + "/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
-        StringBuffer response = apiProcess(url);
+        URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/quizzes/" + quizId + "/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
+        StringBuffer response = apiProcess(url, true);
         JSONObject resultObj = new JSONObject(String.valueOf(response));
         JSONArray result = resultObj.getJSONArray("quiz_submissions");
 
@@ -158,10 +167,10 @@ public class EarnServiceI implements EarnService {
     public String getSurveyDistributionHistory() throws IOException, JSONException, BadRequestException {
         String distributionId = getDistributionId(surveyId);
         URL url = UriComponentsBuilder
-                .fromUriString(API_ENDPOINT + "/distributions/" + distributionId + "/history")
+                .fromUriString(Qualtrics_API_ENDPOINT + "/distributions/" + distributionId + "/history")
                 .queryParam("surveyId", surveyId)
                 .build().toUri().toURL();
-        StringBuffer response = apiProcess(url);
+        StringBuffer response = apiProcess(url,false);
 //        JSONObject resultObj = new JSONObject(String.valueOf(response));
 //        JSONArray surveyDistributions = resultObj.getJSONObject("result").getJSONArray("elements");
         return response.toString();
@@ -169,10 +178,10 @@ public class EarnServiceI implements EarnService {
 
     private String getDistributionId(String surveyId) throws IOException, JSONException, BadRequestException {
         URL url = UriComponentsBuilder
-                .fromUriString(API_ENDPOINT + "/distributions")
+                .fromUriString(Qualtrics_API_ENDPOINT + "/distributions")
                 .queryParam("surveyId", surveyId)
                 .build().toUri().toURL();
-        StringBuffer response = apiProcess(url);
+        StringBuffer response = apiProcess(url, false);
         JSONObject resultObj = new JSONObject(String.valueOf(response));
         JSONArray elementsArray = resultObj.getJSONObject("result").getJSONArray("elements");
         if (elementsArray.length() == 0) {
