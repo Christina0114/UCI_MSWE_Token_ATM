@@ -37,78 +37,62 @@ public class EarnController {
 
     @GetMapping("/survey_export")
         public List<String> getSurveyExport(
-    ) {
-        try {
-            return earnService.getSurveyCompletions("SV_8oIf0qAz5g0TFiK");
-        } catch (InternalServerException e) {
-            LOGGER.error("Internal Server Exception");
-            e.printStackTrace();
-        }
-        return null;
+    ) throws InternalServerException {
+        return earnService.getSurveyCompletions("SV_8oIf0qAz5g0TFiK");
     }
 
     @GetMapping("/sync")
     public String sync(
-    ){
+    ) throws InternalServerException {
         try {
             return earnService.sync();
-        } catch (IOException e) {
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            throw new InternalServerException();
         }
-        return null;
     }
 
     @GetMapping("/users")
     public HashMap<Object, Object> users(
-    ){
+    ) throws InternalServerException {
         try {
             return earnService.getUsers();
-        } catch (IOException e) {
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            throw new InternalServerException();
         }
-        return null;
     }
 
     @GetMapping("/grades")
     public HashMap<Object, Object> getStudentsData(
-    ){
+    )  throws InternalServerException {
         try {
             return earnService.getStudentGrades();
-        } catch (IOException e) {
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            throw new InternalServerException();
         }
-        return null;
     }
 
     @GetMapping("/token_grades")
     public Map<String, Double> getTokenGrades(
-    ){
+    ) throws InternalServerException {
         try {
             return earnService.getStudentTokenGrades();
-        } catch (IOException e) {
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            throw new InternalServerException();
         }
-        return null;
     }
 
     @GetMapping("/courses")
     public HashMap<Object, Object> getCourseData(
-    ){
+    ) throws InternalServerException {
         try {
             return earnService.getCourseData();
-        } catch (IOException e) {
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            throw new InternalServerException();
         }
-        return null;
     }
 }

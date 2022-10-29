@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -197,7 +196,7 @@ public class EarnServiceI implements EarnService {
                 }
             }
         } catch (IOException | JSONException e) {
-            LOGGER.error(e.toString());
+            e.printStackTrace();
             throw new InternalServerException("Error when processing survey data");
         }
 
@@ -290,33 +289,4 @@ public class EarnServiceI implements EarnService {
         }
         return quizScores;
     }
-
-
-//    @Override
-//    public String getSurveyDistributionHistory() throws IOException, JSONException, BadRequestException {
-//        String distributionId = getDistributionId(surveyId);
-//        URL url = UriComponentsBuilder
-//                .fromUriString(QUALTRICS_API_ENDPOINT + "/distributions/" + distributionId + "/history")
-//                .queryParam("surveyId", surveyId)
-//                .build().toUri().toURL();
-//        StringBuffer response = apiProcess(url,false);
-////        JSONObject resultObj = new JSONObject(String.valueOf(response));
-////        JSONArray surveyDistributions = resultObj.getJSONObject("result").getJSONArray("elements");
-//        return response.toString();
-//    }
-//
-//    private String getDistributionId(String surveyId) throws IOException, JSONException, BadRequestException {
-//        URL url = UriComponentsBuilder
-//                .fromUriString(QUALTRICS_API_ENDPOINT + "/distributions")
-//                .queryParam("surveyId", surveyId)
-//                .build().toUri().toURL();
-//        StringBuffer response = apiProcess(url, false);
-//        JSONObject resultObj = new JSONObject(String.valueOf(response));
-//        JSONArray elementsArray = resultObj.getJSONObject("result").getJSONArray("elements");
-//        if (elementsArray.length() == 0) {
-//            LOGGER.error("Distributions array is empty");
-//        }
-//        JSONObject distributionObj = elementsArray.getJSONObject(0);
-//        return distributionObj.getString("id");
-//    }
 }
