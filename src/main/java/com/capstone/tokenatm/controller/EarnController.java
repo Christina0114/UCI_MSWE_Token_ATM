@@ -15,7 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+<<<<<<< HEAD:src/main/java/com/capstone/tokenatm/controller/EarnController.java
 <<<<<<< HEAD
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -24,6 +26,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.*;
 =======
+=======
+import org.springframework.web.bind.annotation.ResponseBody;
+>>>>>>> 7e83700 (add nacos and gateway module):token-service/src/main/java/com/capstone/tokenatm/controller/EarnController.java
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
