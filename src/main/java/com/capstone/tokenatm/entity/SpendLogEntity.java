@@ -2,18 +2,16 @@ package com.capstone.tokenatm.entity;
 
 import java.util.Date;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity // This tells Hibernate to make a table out of this class
+@Table(indexes = @Index(name="id_idx", columnList = "user_id"))
 public class SpendLogEntity {
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	private Integer id;
 
-	private String user_id;
+	private Integer user_id;
 
 	private String type;
 
@@ -23,7 +21,7 @@ public class SpendLogEntity {
 
 	private Date timestamp;
 
-	public String getUserId() {
+	public Integer getUserId() {
 		return user_id;
 	}
 	public Integer getId() {
@@ -34,7 +32,7 @@ public class SpendLogEntity {
 		this.id = id;
 	}
 
-	public void setUser_id(String user_id) {
+	public void setUser_id(Integer user_id) {
 		this.user_id = user_id;
 	}
 
@@ -63,6 +61,10 @@ public class SpendLogEntity {
 	}
 	public void setTimestamp(Date current_time) {
 		this.timestamp = current_time;
+	}
+
+	public Date getTimestamp() {
+		return this.timestamp;
 	}
 
 }

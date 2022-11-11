@@ -6,12 +6,7 @@ import com.capstone.tokenatm.service.LogRepository;
 import com.capstone.tokenatm.entity.SpendLogEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 // This means that this class is a Controller
@@ -21,7 +16,7 @@ public class SpendLogController {
     private LogRepository logRepository;
 
     @PostMapping(path="/add_log") // Map ONLY POST Requests
-    public @ResponseBody String addLog (@RequestParam String user_id, @RequestParam String type, @RequestParam Integer token_count, @RequestParam String source) {
+    public @ResponseBody String addLog (@RequestParam Integer user_id, @RequestParam String type, @RequestParam Integer token_count, @RequestParam String source) {
         // @ResponseBody means the returned String is the response, not a view name
         // @RequestParam means it is a parameter from the GET or POST request
 
@@ -35,9 +30,14 @@ public class SpendLogController {
         return "Saved";
     }
 
-    @GetMapping(path="/log")
-    public @ResponseBody Iterable<SpendLogEntity> getLog() {
+    @GetMapping(path="/logs")
+    public @ResponseBody Iterable<SpendLogEntity> getLogs() {
         // This returns a JSON or XML with the logs
         return logRepository.findAll();
+    }
+
+    @GetMapping(path="/logs/{user_id}")
+    public @ResponseBody Iterable<SpendLogEntity> getLogsForStudent(@PathVariable Integer user_id) {
+        return logRepository.findByUserId(user_id);
     }
 }
