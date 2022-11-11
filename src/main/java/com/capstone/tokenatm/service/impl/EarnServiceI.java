@@ -29,7 +29,10 @@ public class EarnServiceI implements EarnService {
     //Course Id
     private static final int COURSE_ID = 3737737;
     //List of Quizzes in the first module (which needs over 70% average to earn the initial 2 tokens)
-    private static List<Integer> tokenQuizIds = Arrays.asList(12427623);
+    private static List<Integer> tokenQuizIds = Arrays.asList(12427623,12476618,12476695);
+
+    //List of surveys
+    private static List<String> tokenSurveyIds = Arrays.asList("SV_8oIf0qAz5g0TFiK");
 
     //Qualtrics API Settings
     //TODO: The API Endpoint and API key is only used for testing. Please change to UCI endpoint and actual keys in prod
@@ -45,10 +48,44 @@ public class EarnServiceI implements EarnService {
             = MediaType.get("application/json; charset=utf-8");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EarnService.class);
+    private static Map<String, Object> result = new HashMap<>();
 
     @Override
     public String sync() throws IOException, JSONException {
         return getStudentGrades().toString();
+    }
+
+    @Override
+    public Map<String, Object> getStudent() throws IOException, JSONException, InternalServerException {
+        ArrayList<HashMap<String, String>> users = getUsers();
+        Map<String, Integer> token_summary = new HashMap<>();
+
+        Map<String, Double> quiz_token = getStudentTokenGrades();
+
+
+        for (Map.Entry<String, Double> entry : quiz_token.entrySet()) {
+            String user_id = String.valueOf(entry.getKey());
+            Double user_quiz = Double.valueOf(entry.getValue());
+            if(user_quiz > 70.00){
+                token_summary.put(user_id, token_summary.getOrDefault(user_id, 0) + 2);
+            }
+        }
+
+        for (String survey_id : tokenSurveyIds) {
+            List<String> student_emails = getSurveyCompletions(survey_id);
+            student_emails.add("canapitest+4@gmail.com"); // fake_data
+            for (HashMap<String, String> user : users) {
+                if (student_emails.contains(user.get("user_email"))){
+                    token_summary.put(user.get("user_id"), token_summary.getOrDefault(user.get("user_id"), 0) + 1);
+                }
+            }
+        }
+
+        for (HashMap<String, String> user : users) {
+            user.put("token_amount", String.valueOf(token_summary.getOrDefault(user.get("user_id"),0)));
+        }
+        result.put("result",users);
+        return result;
     }
 
     @Override
@@ -84,60 +121,68 @@ public class EarnServiceI implements EarnService {
     }
 
     @Override
-    public HashMap<Object, Object> getUsers() throws IOException, JSONException {
+    public ArrayList<HashMap<String, String>> getUsers() throws IOException, JSONException {
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/users?per_page=50&enrollment_type=student");
         String response = apiProcess(url, true);
         JSONArray result = new JSONArray(response);
 
-        HashMap<Object, Object> users = new HashMap<>();
+        ArrayList<HashMap<String, String>> users = new ArrayList<>();
         for (int i = 0; i < result.length(); i++) {
             String user_id = ((JSONObject) result.get(i)).get("id").toString();
             String users_name = ((JSONObject) result.get(i)).get("name").toString();
-            users.put(user_id, users_name);
+            String users_email = ((JSONObject) result.get(i)).get("email").toString();
+            HashMap<String, String> item = new HashMap<>();
+            item.put("user_id",user_id);
+            item.put("user_name",users_name);
+            item.put("user_email",users_email);
+            users.add(item);
         }
         return users;
     }
 
     @Override
     public HashMap<Object, Object> getStudentGrades() throws IOException, JSONException {
-        Map<Object, Object> users = getUsers();
-        String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
+        ArrayList<HashMap<String, String>> users = getUsers();
+        String users_id = users.stream().map(e -> "&student_ids%5B%5D=" + e.get("user_id")).collect(Collectors.joining(""));
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/students/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
         String response = apiProcess(url, true);
         JSONArray result = new JSONArray(response);
 
         HashMap<Object, Object> students_data = new HashMap<>();
-        HashMap<Object, Object> courses_name = getCourseData();
         for (int i = 0; i < result.length(); i++) {
             ArrayList<String> grades = new ArrayList<>();
             for (int j = 0; j < ((JSONArray) ((JSONObject) result.get(i)).get("submissions")).length(); j++) {
                 String assignment_id = ((JSONObject) ((JSONArray) ((JSONObject) result.get(i)).get("submissions")).get(j)).get("assignment_id").toString();
                 String score = ((JSONObject) ((JSONArray) ((JSONObject) result.get(i)).get("submissions")).get(j)).get("score").toString();
-                grades.add(score + "(" + courses_name.get(assignment_id) + ")");
+                grades.add(score + "(" + assignment_id + ")");
+
             }
             String user_id = ((JSONObject) result.get(i)).get("user_id").toString();
-            String user_name = users.get(user_id).toString();
-            students_data.put(user_name + "(" + user_id + ")", grades);
+            students_data.put( "(" + user_id + ")", grades);
         }
         return students_data;
     }
 
 
     @Override
-    public HashMap<Object, Object> getCourseData() throws IOException, JSONException {
+    public Map<String, Object> getCourseData() throws IOException, JSONException {
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/assignment_groups?exclude_assignment_submission_types%5B%5D=wiki_page&exclude_response_fields%5B%5D=description&exclude_response_fields%5B%5D=in_closed_grading_period&exclude_response_fields%5B%5D=needs_grading_count&exclude_response_fields%5B%5D=rubric&include%5B%5D=assignment_group_id&include%5B%5D=assignment_visibility&include%5B%5D=assignments&include%5B%5D=grades_published&include%5B%5D=post_manually&include%5B%5D=module_ids&override_assignment_dates=false&per_page=100");
-        String response = apiProcess(url, true);
-        JSONArray result = new JSONArray(response);
+        
+        JSONArray response = new JSONArray(apiProcess(url, true));
 
-        HashMap<Object, Object> course_data = new HashMap<>();
-        for (int i = 0; i < result.length(); i++) {
-            for (int j = 0; j < ((JSONArray) ((JSONObject) result.get(i)).get("assignments")).length(); j++) {
-                String assignment_id = ((JSONObject) ((JSONArray) ((JSONObject) result.get(i)).get("assignments")).get(j)).get("id").toString();
-                String assignment_name = ((JSONObject) ((JSONArray) ((JSONObject) result.get(i)).get("assignments")).get(j)).get("name").toString();
-                course_data.put(assignment_id, assignment_name);
+        ArrayList<HashMap<Object, Object>> course_data = new ArrayList<>();
+        for (int i = 0; i < response.length(); i++) {
+            for (int j = 0; j < ((JSONArray) ((JSONObject) response.get(i)).get("assignments")).length(); j++) {
+                HashMap<Object, Object> item = new HashMap<>();
+                String assignment_id = ((JSONObject) ((JSONArray) ((JSONObject) response.get(i)).get("assignments")).get(j)).get("id").toString();
+                String assignment_name = ((JSONObject) ((JSONArray) ((JSONObject) response.get(i)).get("assignments")).get(j)).get("name").toString();
+                item.put("assignment_id",assignment_id);
+                item.put("assignment_name",assignment_name);
+                course_data.add(item);
             }
         }
-        return course_data;
+        result.put("result",course_data);
+        return result;
     }
 
     /**
@@ -272,8 +317,8 @@ public class EarnServiceI implements EarnService {
      * @throws JSONException
      */
     private Map<String, Double> getStudentQuizScores(int quizId) throws IOException, JSONException {
-        Map<Object, Object> users = getUsers();
-        String users_id = users.entrySet().stream().map(e -> "&student_ids%5B%5D=" + e.getKey()).collect(Collectors.joining(""));
+        ArrayList<HashMap<String, String>> users = getUsers();
+        String users_id = users.stream().map(e -> "&student_ids%5B%5D=" + e.get("user_id")).collect(Collectors.joining(""));
         URL url = new URL(CANVAS_API_ENDPOINT + "/courses/" + COURSE_ID + "/quizzes/" + quizId + "/submissions?exclude_response_fields%5B%5D=preview_url&grouped=1&response_fields%5B%5D=assignment_id&response_fields%5B%5D=attachments&response_fields%5B%5D=attempt&response_fields%5B%5D=cached_due_date&response_fields%5B%5D=entered_grade&response_fields%5B%5D=entered_score&response_fields%5B%5D=excused&response_fields%5B%5D=grade&response_fields%5B%5D=grade_matches_current_submission&response_fields%5B%5D=grading_period_id&response_fields%5B%5D=id&response_fields%5B%5D=late&response_fields%5B%5D=late_policy_status&response_fields%5B%5D=missing&response_fields%5B%5D=points_deducted&response_fields%5B%5D=posted_at&response_fields%5B%5D=redo_request&response_fields%5B%5D=score&response_fields%5B%5D=seconds_late&response_fields%5B%5D=submission_type&response_fields%5B%5D=submitted_at&response_fields%5B%5D=url&response_fields%5B%5D=user_id&response_fields%5B%5D=workflow_state&student_ids%5B%5D=" + users_id + "&per_page=100");
         String response = apiProcess(url, true);
         JSONObject resultObj = new JSONObject(response);

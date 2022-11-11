@@ -1,6 +1,5 @@
 package com.capstone.tokenatm.controller;
 
-import com.capstone.tokenatm.exceptions.BadRequestException;
 import com.capstone.tokenatm.exceptions.InternalServerException;
 import com.capstone.tokenatm.service.EarnService;
 import org.slf4j.Logger;
@@ -11,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +53,7 @@ public class EarnController {
     }
 
     @GetMapping("/users")
-    public HashMap<Object, Object> users(
+    public ArrayList<HashMap<String, String>> users(
     ) throws InternalServerException {
         try {
             return earnService.getUsers();
@@ -74,6 +74,17 @@ public class EarnController {
         }
     }
 
+    @GetMapping("/students")
+    public Map<String, Object> getStudent(
+    )  throws InternalServerException {
+        try {
+            return earnService.getStudent();
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+            throw new InternalServerException();
+        }
+    }
+
     @GetMapping("/token_grades")
     public Map<String, Double> getTokenGrades(
     ) throws InternalServerException {
@@ -86,7 +97,7 @@ public class EarnController {
     }
 
     @GetMapping("/courses")
-    public HashMap<Object, Object> getCourseData(
+    public Map<String, Object> getCourseData(
     ) throws InternalServerException {
         try {
             return earnService.getCourseData();
