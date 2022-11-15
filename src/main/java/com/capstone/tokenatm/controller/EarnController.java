@@ -1,19 +1,21 @@
 package com.capstone.tokenatm.controller;
 
+import com.capstone.tokenatm.entity.TokenCountEntity;
 import com.capstone.tokenatm.exceptions.InternalServerException;
 import com.capstone.tokenatm.service.EarnService;
+import com.capstone.tokenatm.service.Student;
+import com.capstone.tokenatm.service.TokenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 public class EarnController {
@@ -22,6 +24,11 @@ public class EarnController {
 
     @Autowired
     EarnService earnService;
+
+    @GetMapping(path="/tokens/{user_id}")
+    public @ResponseBody Optional<TokenCountEntity> getTokenForStudent(@PathVariable Integer user_id) {
+        return earnService.getStudentTokenCount(user_id);
+    }
 
     //For testing if Qualtrics is working
     @GetMapping("/whoami")
@@ -41,17 +48,6 @@ public class EarnController {
         return earnService.getSurveyCompletions("SV_8oIf0qAz5g0TFiK");
     }
 
-    @GetMapping("/users")
-    public ArrayList<HashMap<String, String>> users(
-    ) throws InternalServerException {
-        try {
-            return earnService.getUsers();
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
-            throw new InternalServerException();
-        }
-    }
-
     @GetMapping("/grades")
     public HashMap<Object, Object> getStudentsData(
     )  throws InternalServerException {
@@ -64,10 +60,10 @@ public class EarnController {
     }
 
     @GetMapping("/students")
-    public Map<String, Object> getStudent(
+    public Map<String, Student> getStudents(
     )  throws InternalServerException {
         try {
-            return earnService.getStudent();
+            return earnService.getStudents();
         } catch (IOException | JSONException e) {
             e.printStackTrace();
             throw new InternalServerException();
