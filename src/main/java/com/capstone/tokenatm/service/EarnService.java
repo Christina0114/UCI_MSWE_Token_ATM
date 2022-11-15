@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.*;
 
 public interface EarnService {
-    public Map<String, Student> getStudents() throws IOException, JSONException;
 
     HashMap<Object, Object> getStudentGrades() throws IOException, JSONException;
 
@@ -19,12 +18,14 @@ public interface EarnService {
     Map<String, Double> getStudentTokenGrades() throws IOException, JSONException;
 
     @Retryable(value = InternalServerException.class, maxAttempts = 10, backoff = @Backoff(delay = 1_000))
-    List<String> getSurveyCompletions(String surveyId) throws InternalServerException;
+    Set<String> getSurveyCompletions(String surveyId) throws InternalServerException;
 
     String getIdentity() throws IOException, JSONException;
 
     Iterable<TokenCountEntity> getAllStudentTokenCounts();
 
     Optional<TokenCountEntity> getStudentTokenCount(Integer user_id);
+
+    void syncTokensOnDeadline() throws JSONException, IOException;
 }
 

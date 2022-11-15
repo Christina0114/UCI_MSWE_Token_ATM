@@ -43,7 +43,7 @@ public class EarnController {
     }
 
     @GetMapping("/survey_export")
-        public List<String> getSurveyExport(
+        public Set<String> getSurveyExport(
     ) throws InternalServerException {
         return earnService.getSurveyCompletions("SV_8oIf0qAz5g0TFiK");
     }
@@ -60,14 +60,9 @@ public class EarnController {
     }
 
     @GetMapping("/students")
-    public Map<String, Student> getStudents(
-    )  throws InternalServerException {
-        try {
-            return earnService.getStudents();
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
-            throw new InternalServerException();
-        }
+    public Iterable<TokenCountEntity> getStudents(
+    ) {
+        return earnService.getAllStudentTokenCounts();
     }
 
     @GetMapping("/token_grades")
