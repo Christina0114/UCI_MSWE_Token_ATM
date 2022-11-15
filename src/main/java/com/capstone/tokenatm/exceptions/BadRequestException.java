@@ -5,9 +5,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "Resource Not Found")
 public class BadRequestException extends Exception{
+<<<<<<< HEAD
     public BadRequestException(String message) {
         super(message);
     }
 
     public BadRequestException() {}
+=======
+
+>>>>>>> 674a9d9 (add remove template)
 }

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<<<<<<< HEAD
 <project
         xmlns="http://maven.apache.org/POM/4.0.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -33,6 +34,17 @@
     <description>
         UCI_MSWE_Token_ATM
     </description>
+=======
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>token-atm</artifactId>
+    <groupId>com.example</groupId>
+    <version>0.0.1-SNAPSHOT</version>
+
+>>>>>>> 7e83700 (add nacos and gateway module)
     <properties>
         <java.version>
             17
@@ -136,4 +148,13 @@
         </plugins>
     </build>
 
+<<<<<<< HEAD
+=======
+    <modules>
+        <module>token-service</module>
+        <module>renren-fast</module>
+        <module>token-gateway</module>
+        <module>token-common</module>
+    </modules>
+>>>>>>> 7e83700 (add nacos and gateway module)
 </project>
