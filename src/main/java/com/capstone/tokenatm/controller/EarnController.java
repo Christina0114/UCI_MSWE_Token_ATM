@@ -41,17 +41,6 @@ public class EarnController {
         return earnService.getSurveyCompletions("SV_8oIf0qAz5g0TFiK");
     }
 
-    @GetMapping("/sync")
-    public String sync(
-    ) throws InternalServerException {
-        try {
-            return earnService.sync();
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
-            throw new InternalServerException();
-        }
-    }
-
     @GetMapping("/users")
     public ArrayList<HashMap<String, String>> users(
     ) throws InternalServerException {

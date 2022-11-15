@@ -1,5 +1,7 @@
 package com.capstone.tokenatm.entity;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -13,6 +15,10 @@ public class TokenCountEntity {
 
     private Integer token_count;
 
+    private String user_name;
+
+    private Date timestamp;
+
     public Integer getUser_id() {
         return user_id;
     }
@@ -21,8 +27,17 @@ public class TokenCountEntity {
         this.user_id = user_id;
     }
 
+    public void setUser_name(String user_name) {
+        this.user_name = user_name;
+    }
+
     public Integer getToken_count() {
         return token_count;
+    }
+
+
+    public void setTimestamp(Date current_time) {
+        this.timestamp = current_time;
     }
 
     public void setToken_count(Integer token_count) {

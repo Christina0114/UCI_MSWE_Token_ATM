@@ -25,8 +25,6 @@ public interface EarnService {
 
     String getIdentity() throws IOException, JSONException;
 
-    String sync() throws IOException, JSONException;
-
     Map<String, Object> getStudent() throws IOException, JSONException, InternalServerException;
 }
 

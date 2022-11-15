@@ -50,10 +50,6 @@ public class EarnServiceI implements EarnService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EarnService.class);
     private static Map<String, Object> result = new HashMap<>();
 
-    @Override
-    public String sync() throws IOException, JSONException {
-        return getStudentGrades().toString();
-    }
 
     @Override
     public Map<String, Object> getStudent() throws IOException, JSONException, InternalServerException {
