@@ -2,22 +2,22 @@ package com.capstone.tokenatm.service;
 
 public class Student {
 
-    private Integer id;
+    private String id;
     private String name;
     private String email;
     private Integer tokenCount;
 
-    public Student(Integer id, String name, String email) {
+    public Student(String id, String name, String email) {
         this.id = id;
         this.name = name;
         this.email = email;
     }
 
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 

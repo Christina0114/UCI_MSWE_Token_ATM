@@ -25,8 +25,13 @@ public class EarnController {
     @Autowired
     EarnService earnService;
 
+    @GetMapping(path="/sync")
+    public @ResponseBody Iterable<TokenCountEntity> manualSync() throws JSONException, IOException {
+        return earnService.manualSyncTokens();
+    }
+
     @GetMapping(path="/tokens/{user_id}")
-    public @ResponseBody Optional<TokenCountEntity> getTokenForStudent(@PathVariable Integer user_id) {
+    public @ResponseBody Optional<TokenCountEntity> getTokenForStudent(@PathVariable String user_id) {
         return earnService.getStudentTokenCount(user_id);
     }
 

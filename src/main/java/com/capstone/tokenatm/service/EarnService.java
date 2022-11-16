@@ -1,5 +1,6 @@
 package com.capstone.tokenatm.service;
 
+import antlr.Token;
 import com.capstone.tokenatm.entity.TokenCountEntity;
 import com.capstone.tokenatm.exceptions.InternalServerException;
 import org.springframework.boot.configurationprocessor.json.JSONException;
@@ -24,8 +25,10 @@ public interface EarnService {
 
     Iterable<TokenCountEntity> getAllStudentTokenCounts();
 
-    Optional<TokenCountEntity> getStudentTokenCount(Integer user_id);
+    Optional<TokenCountEntity> getStudentTokenCount(String user_id);
 
     void syncTokensOnDeadline() throws JSONException, IOException;
+
+    Iterable<TokenCountEntity> manualSyncTokens() throws JSONException, IOException;
 }
 
