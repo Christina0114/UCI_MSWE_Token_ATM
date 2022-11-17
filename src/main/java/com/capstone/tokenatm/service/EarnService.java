@@ -30,5 +30,7 @@ public interface EarnService {
     void syncTokensOnDeadline() throws JSONException, IOException;
 
     Iterable<TokenCountEntity> manualSyncTokens() throws JSONException, IOException;
+
+    List<AssignmentStatus> getAssignmentStatuses(String user_id) throws JSONException, IOException;
 }
 

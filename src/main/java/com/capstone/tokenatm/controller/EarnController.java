@@ -2,6 +2,7 @@ package com.capstone.tokenatm.controller;
 
 import com.capstone.tokenatm.entity.TokenCountEntity;
 import com.capstone.tokenatm.exceptions.InternalServerException;
+import com.capstone.tokenatm.service.AssignmentStatus;
 import com.capstone.tokenatm.service.EarnService;
 import com.capstone.tokenatm.service.Student;
 import com.capstone.tokenatm.service.TokenRepository;
@@ -24,6 +25,11 @@ public class EarnController {
 
     @Autowired
     EarnService earnService;
+
+    @GetMapping(path="/assignment_status/{user_id}")
+    public @ResponseBody List<AssignmentStatus> getAssignmentStatuses(@PathVariable String user_id) throws JSONException, IOException {
+        return earnService.getAssignmentStatuses(user_id);
+    }
 
     @GetMapping(path="/sync")
     public @ResponseBody Iterable<TokenCountEntity> manualSync() throws JSONException, IOException {
